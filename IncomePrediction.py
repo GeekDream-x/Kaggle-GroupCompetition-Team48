@@ -17,10 +17,12 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import mean_absolute_error
 
 nrows = None
+#reading the training and test datasets
 test = pd.read_csv("tcd-ml-1920-group-income-train.csv",nrows=nrows)
 train = pd.read_csv("tcd-ml-1920-group-income-test.csv",nrows=nrows)
 train = train.rename(columns={"Total Yearly Income [EUR]":'Income'})
 test = test.rename(columns={"Total Yearly Income [EUR]":'Income'})
+
 #replace missing values with mode
 print(train.apply(lambda x:np.sum(x.isnull()))) 
 train.fillna(value = {'Year of Record':train['Year of Record'].mode()[0],
@@ -40,6 +42,7 @@ test.fillna(value={'Year of Record':test['Year of Record'].mode()[0],
              'University Degree':test['University Degree'].mode()[0],
              'Hair Color':test['Hair Color'].mode()[0]},inplace=True)
 print(test.apply(lambda x:np.sum(x.isnull())))
+
 # #replacing 0s with categorical values
 train['Housing Situation'] = train['Housing Situation'].replace(['0','nA' ], 'Unknown')   
 train['Housing Situation'] = train['Housing Situation'].replace([' ' ], '')
@@ -61,6 +64,7 @@ train['Yearly Income in addition to Salary (e.g. Rental Income)']=train['Yearly 
 
 print(train.describe())
 print(test.describe())
+
 #Combine training and testing data
 all_data = pd.concat([train,test],ignore_index=True)
 columns = {'Work Experience in Current Job [years]':'Work Experience in Current Job years',
@@ -72,6 +76,7 @@ all_data = all_data.rename(columns=columns)
 train.head()
 test.head()
 all_data.head()
+
 #Feature encoding
 le = LabelEncoder()
 for col in all_data.dtypes[all_data.dtypes == 'object'].index.tolist():
@@ -91,11 +96,13 @@ train.head()
 
 feat_col = [col for col in train.columns if col not in ['Instance','Income']]
 feat_col
+
 #Split the dataset
 from sklearn.model_selection import train_test_split
 x_train,x_test,y_train,y_test = train_test_split(train[feat_col],train['Income'],test_size=0.2
                                                  ,random_state=2019)
 'done'
+
 #Run Lightgbm 
 params = {
          'num_trees':10000,
@@ -116,6 +123,7 @@ gbm = lgb.train(params, train_data, 100000, valid_sets = [train_data, test_data]
 pre_test1 = gbm.predict(x_test.values)
 pre_test2 = gbm.predict(test[feat_col].values)
 'done'
+
 #Got the MAE score
 MAE=mean_absolute_error(y_test.values,pre_test1)
 print(MAE)
